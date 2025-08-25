@@ -68,20 +68,31 @@ Shader "Custom/NoteStickGlowShader"
             v2f vert (appdata v)
             {
                 v2f o;
+                // Вычисляем мировые границы без учёта возможного смещения вершин
+                float3 worldCenter = mul(unity_ObjectToWorld, float4(0, 0, 0, 1)).xyz;
+                float3 minBounds = mul(unity_ObjectToWorld, float4(-0.5, 0, -0.5, 1)).xyz;
+                float3 maxBounds = mul(unity_ObjectToWorld, float4(0.5, 0, 0.5, 1)).xyz;
+
+                // Расширяем по X и добавляем вылет ауры строго у дальнего торца (по миру)
                 if (_GlowEnabled > 0.5)
                 {
                     v.vertex.x *= _GlowScale;
-                    if (v.vertex.z > 0) // Добавляем фиксированное смещение по Z для дальнего конца
+
+                    // Мировая позиция текущей вершины без Z-смещения ауры
+                    float3 worldPosNoOffset = mul(unity_ObjectToWorld, v.vertex).xyz;
+
+                    // Смещаем только вершины, лежащие на дальнем торце по миру
+                    // Это устраняет привязку к локальному порогу z>0, из‑за которого аура «уплывала»
+                    if (worldPosNoOffset.z >= (maxBounds.z - 0.0001))
                     {
                         v.vertex.z += _GlowScaleZ;
                     }
                 }
+
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.uv = v.uv;
-                o.objectCenter = mul(unity_ObjectToWorld, float4(0, 0, 0, 1)).xyz;
-                float3 minBounds = mul(unity_ObjectToWorld, float4(-0.5, 0, -0.5, 1)).xyz;
-                float3 maxBounds = mul(unity_ObjectToWorld, float4(0.5, 0, 0.5, 1)).xyz;
+                o.objectCenter = worldCenter;
                 o.maxZ = maxBounds.z;
                 o.baseLength = abs(maxBounds.z - minBounds.z);
                 o.stickLength = o.baseLength;
