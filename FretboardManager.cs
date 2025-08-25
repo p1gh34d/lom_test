@@ -71,6 +71,12 @@ private void Update()
             fretboardMaterial = new Material(Shader.Find("Custom/GuitarFade"));
             fretboardMaterial.SetTexture("_MainTex", flippedTexture);
             guitarRenderer.material = fretboardMaterial;
+            
+            // Update Star Power properties if controller exists
+            if (StarPowerController.Instance != null)
+            {
+                StarPowerController.Instance.UpdateRendererProperties(guitarRenderer);
+            }
         }
         else
         {
